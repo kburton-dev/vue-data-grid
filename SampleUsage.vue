@@ -9,8 +9,8 @@
 </template>
 
 <script>
-import SimpleGrid from '../SimpleGrid/SimpleGrid.vue';
-import { PageInfo, OrderBy, ColumnConfig } from '../SimpleGrid/models';
+import SimpleGrid from './SimpleGrid.vue';
+import { PageInfo, OrderBy, ColumnConfig } from './models';
 
 import axios from 'axios';
 
@@ -35,11 +35,6 @@ export default {
     },
     methods: {
         getData(page, sort = null, dir = null) {
-            if (this.isLoading) {
-                return;
-            }
-            this.isLoading = true;
-
             axios.get('/gridData', { params: { page, sort, dir } })
                 .then(response => {
                     this.simpleGridOptions.dataset = response.data.results;
@@ -47,8 +42,7 @@ export default {
                     this.simpleGridOptions.pageInfo = new PageInfo(response.data.page, response.data.totalPages);
                     this.simpleGridOptions.order = new OrderBy(sort, dir);
                 })
-                .catch(() => this.$toastr.e('Something went wrong while trying to load the data, please try again.'))
-                .finally(() => this.isLoading = false);
+                .catch(() => this.$toastr.e('Something went wrong while trying to load the data, please try again.'));
         },
         changeOrder(order) {
             this.getData(1, order.key, order.direction);
