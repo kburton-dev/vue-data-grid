@@ -46,7 +46,7 @@ methods: {
                 this.simpleGridOptions.dataset = r.data.results;
 
                 this.simpleGridOptions.pageInfo = new PageInfo(r.data.page, r.data.totalPages);
-                this.simpleGridOptions.order = new OrderBy(sort, dir);
+                this.simpleGridOptions.order = sort && dir ? new OrderBy(sort, dir) : null;
             });
     },
     changeOrder(order) {

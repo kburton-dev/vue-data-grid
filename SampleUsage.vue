@@ -40,15 +40,19 @@ export default {
                     this.simpleGridOptions.dataset = response.data.results;
 
                     this.simpleGridOptions.pageInfo = new PageInfo(response.data.page, response.data.totalPages);
-                    this.simpleGridOptions.order = new OrderBy(sort, dir);
+                    this.simpleGridOptions.order = sort && dir ? new OrderBy(sort, dir) : null;
                 })
-                .catch(() => this.$toastr.e('Something went wrong while trying to load the data, please try again.'));
+                .catch(() => console.log('Something went wrong while trying to load the data, please try again.'));
         },
         changeOrder(order) {
             this.getData(1, order.key, order.direction);
         },
         changePage(page) {
-            this.getData(page, this.simpleGridOptions.order.key, this.simpleGridOptions.order.direction);
+            if (this.simpleGridOptions.order) {
+                this.getData(page, this.simpleGridOptions.order.key, this.simpleGridOptions.order.direction);
+            } else {
+                this.getData(page);
+            }
         }
     }
 }

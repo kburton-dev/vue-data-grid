@@ -38,6 +38,9 @@
 <script>
 import { PageInfo, OrderBy } from './models';
 
+// Local non-reactive variables, performance is a bit better than using Vue's reactivity if I use the browser API directly.
+let movingColumn = null, startingX = null, startingWidth = null, colMovingTarget = null, blockNextColClick = false;
+
 export default {
     props: {
         dataset: { require: true, type: Array },
@@ -45,63 +48,50 @@ export default {
         order: { required: false, default: null, type: OrderBy },
         pageInfo: { required: false, default: null, type: PageInfo },
     },
-    data() {
-        return {
-            movingColumn: null,
-            startingX: null,
-            startingWidth: null,
-            colMovingTarget: null,
-            blockNextColClick: false,
-        }
-    },
     methods: {
         getColumnKey(i) {
             return this.columns[i].key;
         },
         resizeMouseDown(e) {
-            this.movingColumn = e.target.closest('th');
-            this.startingX = e.pageX;
-            this.startingWidth = this.movingColumn.offsetWidth;
+            movingColumn = e.target.closest('th');
+            startingX = e.pageX;
+            startingWidth = movingColumn.offsetWidth;
 
-            this.colMovingTarget = e.target;
-            this.colMovingTarget.classList.add('resizing');
+            colMovingTarget = e.target;
+            colMovingTarget.classList.add('resizing');
 
-            this.colMovingTarget.style.height = this.$refs.table.clientHeight + 'px';
+            colMovingTarget.style.height = this.$refs.table.clientHeight + 'px';
 
-            this.blockNextColClick = true;
+            blockNextColClick = true;
         },
         stopResize(e) {
-            if (!this.movingColumn && !this.colMovingTarget) return;
+            if (!movingColumn && !colMovingTarget) return;
 
-            let diffX = e.pageX - this.startingX;
-            this.movingColumn.style.width = (this.startingWidth + diffX) + 'px';
-            this.movingColumn.classList.add('pinned');
+            let diffX = e.pageX - startingX;
+            movingColumn.style.width = (startingWidth + diffX) + 'px';
+            movingColumn.classList.add('pinned');
 
-            this.movingColumn = null;
+            colMovingTarget.style.removeProperty('left');
+            colMovingTarget.style.removeProperty('height');
+            colMovingTarget.classList.remove('resizing');
 
-            this.colMovingTarget.style.removeProperty('left');
-            this.colMovingTarget.style.removeProperty('height');
-            this.colMovingTarget.classList.remove('resizing');
-
-            this.colMovingTarget = null;
+            movingColumn = null, colMovingTarget = null;
         },
         mouseMoved(e) {
-            if (!this.movingColumn || !this.colMovingTarget || e.layerX <= 1) return;
+            if (!movingColumn || !colMovingTarget) return;
 
-            let diffX = e.pageX - this.startingX;
-            this.colMovingTarget.style.left = (this.startingWidth + diffX - 5) + 'px';
+            let diffX = e.pageX - startingX;
+            colMovingTarget.style.left = (startingWidth + diffX - 5) + 'px';
         },
         colClicked(key) {
-            if (this.blockNextColClick) {
-                this.blockNextColClick = false;
+            if (blockNextColClick) {
+                blockNextColClick = false;
                 return;
             }
 
-            let direction;
-            if (this.order && this.order.key == key)
-                direction = this.order.direction == 'asc' ? 'desc' : 'asc';
-            else
-                direction = 'asc';
+            let direction = 'asc';
+            if (this.order && this.order.key == key && this.order.direction == 'asc')
+                direction = 'desc';
 
             this.$emit('sort', { key, direction })
         }
